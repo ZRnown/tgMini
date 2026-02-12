@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BindingStatus {
+  UNBOUND
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ExchangeStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum TransactionType {
+  REBATE
+  WITHDRAWAL
+  POINT_CONVERT
+  CHECKIN
+  ADJUSTMENT
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  PAID
+  REJECTED
+  CANCELED
+}
+
+enum SettlementStatus {
+  PENDING
+  SCHEDULED
+  SETTLED
+  VOID
+}
+
+model User {
+  id              BigInt   @id
+  username        String?
+  inviterId       BigInt?
+  balance         Decimal  @default(0)
+  balanceFrozen   Decimal  @default(0)
+  points          Int      @default(0)
+  vipLevel        Int      @default(1)
+  checkInStreak   Int      @default(0)
+  lastCheckInDate DateTime?
+  isBanned        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  bindings     UserBinding[]
+  transactions TransactionLog[]
+  withdrawals  WithdrawalRequest[]
+  settlements  RebateSettlement[]
+  tradeReports DailyTradeReport[]
+
+  @@index([inviterId])
+}
+
+model Exchange {
+  id        String         @id @default(cuid())
+  name      String         @unique
+  icon      String?
+  regLink   String?
+  guide     String?
+  status    ExchangeStatus @default(ACTIVE)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  bindings     UserBinding[]
+  tradeReports DailyTradeReport[]
+}
+
+model UserBinding {
+  id           String        @id @default(cuid())
+  userId       BigInt
+  exchangeId   String
+  uid          String
+  status       BindingStatus @default(PENDING)
+  submitTime   DateTime      @default(now())
+  reviewedAt   DateTime?
+  reviewedBy   BigInt?
+  rejectReason String?
+
+  user     User     @relation(fields: [userId], references: [id])
+  exchange Exchange @relation(fields: [exchangeId], references: [id])
+
+  @@unique([exchangeId, uid])
+  @@unique([userId, exchangeId])
+  @@index([status])
+}
+
+model TransactionLog {
+  id           String            @id @default(cuid())
+  userId       BigInt
+  type         TransactionType
+  amount       Decimal
+  balanceDelta Decimal           @default(0)
+  pointsDelta  Int               @default(0)
+  status       TransactionStatus @default(COMPLETED)
+  referenceId  String?
+  meta         Json?
+  createdAt    DateTime          @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, type, createdAt])
+}
+
+model VipConfig {
+  level            Int     @id
+  name             String
+  minPoints        Int
+  rebateRatioBonus Decimal
+  updatedAt        DateTime @updatedAt
+}
+
+model WithdrawalRequest {
+  id             String           @id @default(cuid())
+  userId         BigInt
+  amount         Decimal
+  fee            Decimal
+  address        String
+  status         WithdrawalStatus @default(PENDING)
+  txHash         String?
+  requestedAt    DateTime         @default(now())
+  approvedAt     DateTime?
+  completedAt    DateTime?
+  reviewedBy     BigInt?
+  memo           String?
+  idempotencyKey String?          @unique
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([status, requestedAt])
+}
+
+model DailyTradeReport {
+  id           String   @id @default(cuid())
+  exchangeId   String
+  userId       BigInt
+  tradeDate    DateTime
+  tradeVolume  Decimal
+  baseFeeRate  Decimal
+  autoRebate   Decimal  @default(0)
+  manualRebate Decimal @default(0)
+  source       String?
+  raw          Json?
+  createdAt    DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  exchange Exchange @relation(fields: [exchangeId], references: [id])
+  settlement RebateSettlement?
+
+  @@unique([exchangeId, userId, tradeDate])
+  @@index([tradeDate])
+}
+
+model RebateSettlement {
+  id          String           @id @default(cuid())
+  reportId    String           @unique
+  userId      BigInt
+  tradeDate   DateTime
+  amount      Decimal
+  status      SettlementStatus @default(SCHEDULED)
+  scheduledAt DateTime
+  settledAt   DateTime?
+
+  user   User             @relation(fields: [userId], references: [id])
+  report DailyTradeReport @relation(fields: [reportId], references: [id])
+
+  @@index([status, scheduledAt])
+}
+
+model Config {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model ReplayNonce {
+  nonce     String   @id
+  userId    BigInt?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

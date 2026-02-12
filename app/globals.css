@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-gradient-graphite {
+    background-image: linear-gradient(90deg, #c6cad3 0%, #7b808a 50%, #c6cad3 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+@layer base {
+  :root {
+    --background: 240 7% 5.5%;
+    --foreground: 0 0% 95%;
+    --card: 240 6% 9%;
+    --card-foreground: 0 0% 95%;
+    --popover: 240 6% 9%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 107 74% 64%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 240 5% 14%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 240 5% 18%;
+    --muted-foreground: 240 5% 50%;
+    --accent: 107 74% 64%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 16%;
+    --input: 240 5% 14%;
+    --ring: 107 74% 64%;
+    --radius: 0.75rem;
+    
+    --gain: 107 74% 64%;
+    --loss: 0 84% 60%;
+    --warning: 38 92% 50%;
+    --info: 199 89% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .card-base {
+    @apply bg-card border border-border rounded-xl;
+  }
+  
+  .text-gain {
+    color: hsl(var(--gain));
+  }
+  
+  .text-loss {
+    color: hsl(var(--loss));
+  }
+  
+  .bg-gain {
+    background-color: hsl(var(--gain));
+  }
+  
+  .bg-loss {
+    background-color: hsl(var(--loss));
+  }
+}
