@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useMemo, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Home, Search, Link2, Trophy, User } from "lucide-react"
 import { usePathname } from "next/navigation"
@@ -14,6 +15,27 @@ const navItems = [
 
 export function FloatingDock() {
   const pathname = usePathname()
+  const [tgQuery, setTgQuery] = useState("")
+  const [tgHash, setTgHash] = useState("")
+
+  useEffect(() => {
+    const search = new URLSearchParams(window.location.search)
+    const forward = new URLSearchParams()
+    for (const [key, value] of search.entries()) {
+      if (key.startsWith("tgWebApp")) {
+        forward.set(key, value)
+      }
+    }
+    setTgQuery(forward.toString())
+    setTgHash(window.location.hash || "")
+  }, [])
+
+  const withTelegramParams = useMemo(() => {
+    return (href: string) => {
+      const pathWithQuery = tgQuery ? `${href}?${tgQuery}` : href
+      return tgHash ? `${pathWithQuery}${tgHash}` : pathWithQuery
+    }
+  }, [tgHash, tgQuery])
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border safe-area-pb">
@@ -25,7 +47,7 @@ export function FloatingDock() {
           return (
             <a
               key={item.href}
-              href={item.href}
+              href={withTelegramParams(item.href)}
               className={cn(
                 "flex flex-col items-center justify-center py-2 px-4 rounded-lg transition-colors",
                 isActive 
