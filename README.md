@@ -1,6 +1,6 @@
 # Telegram TMA 返佣代理系统
 
-本仓库包含 Telegram 小程序前端 + 后端 API + 管理机器人。后端基于 Next.js API Routes + Prisma + PostgreSQL。
+本仓库包含 Telegram 小程序前端 + 后端 API + 管理机器人。后端基于 Next.js API Routes + Prisma + MySQL。
 
 ## 快速开始
 
