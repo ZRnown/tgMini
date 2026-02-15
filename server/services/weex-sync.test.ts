@@ -1,6 +1,44 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { syncWeexTradesFromBridge } from "./weex-sync"
+import { resolveBridgeConfigs, syncWeexTradesFromBridge } from "./weex-sync"
+
+test("resolves per-exchange bridge configs when present", async () => {
+  const configs = await resolveBridgeConfigs(async (key) => {
+    if (key === "BINANCE_BRIDGE_URL") return "https://bridge.example.com/binance"
+    if (key === "BINANCE_BRIDGE_TOKEN") return "binance-token"
+    if (key === "WEEX_BRIDGE_URL") return "https://bridge.example.com/weex"
+    if (key === "WEEX_BRIDGE_TOKEN") return "weex-token"
+    return undefined
+  })
+
+  assert.equal(configs.length, 2)
+  assert.equal(configs[0].exchange, "binance")
+  assert.equal(configs[1].exchange, "weex")
+})
+
+test("throws when exchange bridge URL exists but token is missing", async () => {
+  await assert.rejects(
+    () =>
+      resolveBridgeConfigs(async (key) => {
+        if (key === "OKX_BRIDGE_URL") return "https://bridge.example.com/okx"
+        return undefined
+      }),
+    /OKX_BRIDGE_TOKEN/
+  )
+})
+
+test("falls back to legacy WEEX_BRIDGE config when no exchange-specific config exists", async () => {
+  const configs = await resolveBridgeConfigs(async (key) => {
+    if (key === "WEEX_BRIDGE_URL") return "https://bridge.example.com/sync"
+    if (key === "WEEX_BRIDGE_TOKEN") return "legacy-token"
+    return undefined
+  })
+
+  assert.equal(configs.length, 1)
+  assert.equal(configs[0].exchange, "weex")
+  assert.equal(configs[0].url, "https://bridge.example.com/sync")
+  assert.equal(configs[0].token, "legacy-token")
+})
 
 test("throws when WEEX_BRIDGE_URL is missing", async () => {
   await assert.rejects(
@@ -13,7 +51,7 @@ test("throws when WEEX_BRIDGE_URL is missing", async () => {
           fetchFn: async () => new Response(JSON.stringify({ rows: [] }), { status: 200 }),
         }
       ),
-    /WEEX_BRIDGE_URL/
+    /No exchange bridge configured/
   )
 })
 

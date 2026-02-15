@@ -57,6 +57,23 @@ export type WeexSyncResult = ImportSummary & {
   pulled: number
 }
 
+type BridgeExchange = "binance" | "okx" | "bitget" | "gate" | "weex"
+
+type BridgeTargetConfig = {
+  exchange: BridgeExchange
+  label: string
+  url: string
+  token: string
+}
+
+const bridgeTargets: Array<{ exchange: BridgeExchange; label: string; prefix: string }> = [
+  { exchange: "binance", label: "Binance", prefix: "BINANCE" },
+  { exchange: "okx", label: "OKX", prefix: "OKX" },
+  { exchange: "bitget", label: "Bitget", prefix: "BITGET" },
+  { exchange: "gate", label: "Gate.io", prefix: "GATE" },
+  { exchange: "weex", label: "Weex", prefix: "WEEX" },
+]
+
 const toNumber = (value: unknown): number | null => {
   const parsed = Number(value)
   if (!Number.isFinite(parsed)) {
@@ -222,6 +239,61 @@ const readErrorBody = async (response: FetchLikeResponse) => {
   }
 }
 
+const readBridgePair = async (
+  getConfigFn: GetConfigLike,
+  urlKey: string,
+  tokenKey: string
+) => {
+  const url = await getConfigFn(urlKey, process.env[urlKey] ?? "")
+  const token = await getConfigFn(tokenKey, process.env[tokenKey] ?? "")
+
+  if (url && !token) {
+    throw new Error(`${tokenKey} not configured`)
+  }
+  if (!url && token) {
+    throw new Error(`${urlKey} not configured`)
+  }
+
+  return { url, token }
+}
+
+export const resolveBridgeConfigs = async (getConfigFn: GetConfigLike): Promise<BridgeTargetConfig[]> => {
+  const configs: BridgeTargetConfig[] = []
+
+  for (const target of bridgeTargets) {
+    const urlKey = `${target.prefix}_BRIDGE_URL`
+    const tokenKey = `${target.prefix}_BRIDGE_TOKEN`
+    const pair = await readBridgePair(getConfigFn, urlKey, tokenKey)
+    if (!pair.url || !pair.token) {
+      continue
+    }
+    configs.push({
+      exchange: target.exchange,
+      label: target.label,
+      url: pair.url,
+      token: pair.token,
+    })
+  }
+
+  if (configs.length > 0) {
+    return configs
+  }
+
+  const legacyPair = await readBridgePair(getConfigFn, "WEEX_BRIDGE_URL", "WEEX_BRIDGE_TOKEN")
+  if (!legacyPair.url || !legacyPair.token) {
+    throw new Error("No exchange bridge configured. Please set at least one *_BRIDGE_URL and *_BRIDGE_TOKEN.")
+  }
+
+  return [
+    {
+      exchange: "weex",
+      label: "Weex",
+      url: legacyPair.url,
+      token: legacyPair.token,
+    },
+  ]
+}
+
 export const syncWeexTradesFromBridge = async (
   options: WeexSyncOptions = {},
   deps: WeexSyncDeps = {}
@@ -240,37 +312,42 @@ export const syncWeexTradesFromBridge = async (
       return importTradeRows(rows, source)
     })
 
-  const bridgeUrl = await getConfigFn("WEEX_BRIDGE_URL", process.env.WEEX_BRIDGE_URL ?? "")
-  if (!bridgeUrl) {
-    throw new Error("WEEX_BRIDGE_URL not configured")
+  const bridgeConfigs = await resolveBridgeConfigs(getConfigFn)
+
+  const result: WeexSyncResult = {
+    pulled: 0,
+    total: 0,
+    inserted: 0,
+    skipped: 0,
+    errors: [],
   }
 
-  const bridgeToken = await getConfigFn("WEEX_BRIDGE_TOKEN", process.env.WEEX_BRIDGE_TOKEN ?? "")
-  if (!bridgeToken) {
-    throw new Error("WEEX_BRIDGE_TOKEN not configured")
+  for (const config of bridgeConfigs) {
+    const requestUrl = buildBridgeUrl(config.url, options)
+
+    const response = await fetchFn(requestUrl, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${config.token}`,
+      },
+    })
+
+    if (!response.ok) {
+      const body = await readErrorBody(response)
+      throw new Error(`${config.label} bridge request failed (${response.status})${body ? `: ${body}` : ""}`)
+    }
+
+    const payload = await response.json()
+    const rows = normalizeBridgeRows(payload)
+    const summary = await importTradeRowsFn(rows, `${config.exchange}-bridge`)
+
+    result.pulled += rows.length
+    result.total += summary.total
+    result.inserted += summary.inserted
+    result.skipped += summary.skipped
+    result.errors.push(...summary.errors.map((item) => `[${config.label}] ${item}`))
   }
 
-  const requestUrl = buildBridgeUrl(bridgeUrl, options)
-
-  const response = await fetchFn(requestUrl, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${bridgeToken}`,
-    },
-  })
-
-  if (!response.ok) {
-    const body = await readErrorBody(response)
-    throw new Error(`Weex bridge request failed (${response.status})${body ? `: ${body}` : ""}`)
-  }
-
-  const payload = await response.json()
-  const rows = normalizeBridgeRows(payload)
-  const summary = await importTradeRowsFn(rows, "weex-bridge")
-
-  return {
-    pulled: rows.length,
-    ...summary,
-  }
+  return result
 }

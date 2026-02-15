@@ -48,7 +48,7 @@ const start = async () => {
     .text("👑 VIP 配置")
     .text("🧾 结算返佣")
     .row()
-    .text("🔄 同步 Weex")
+    .text("🔄 同步交易所")
     .text("🧭 管理面板")
     .resized()
 
@@ -62,7 +62,7 @@ const start = async () => {
     .text("VIP 配置", "admin:vip:menu")
     .text("结算返佣", "admin:settle")
     .row()
-    .text("同步 Weex", "admin:weex:sync")
+    .text("同步交易所", "admin:weex:sync")
 
   const configKeyboard = new InlineKeyboard()
     .text("公群·公告频道", "admin:config:set:PUBLIC_GROUP_ANNOUNCE_URL")
@@ -74,6 +74,22 @@ const start = async () => {
     .text("聚合群机器人", "admin:config:set:COMMUNITY_BOT_URL")
     .row()
     .text("联系客服机器人", "admin:config:set:SUPPORT_BOT_URL")
+    .row()
+    .text("Binance桥接地址", "admin:config:set:BINANCE_BRIDGE_URL")
+    .row()
+    .text("Binance桥接令牌", "admin:config:set:BINANCE_BRIDGE_TOKEN")
+    .row()
+    .text("OKX桥接地址", "admin:config:set:OKX_BRIDGE_URL")
+    .row()
+    .text("OKX桥接令牌", "admin:config:set:OKX_BRIDGE_TOKEN")
+    .row()
+    .text("Bitget桥接地址", "admin:config:set:BITGET_BRIDGE_URL")
+    .row()
+    .text("Bitget桥接令牌", "admin:config:set:BITGET_BRIDGE_TOKEN")
+    .row()
+    .text("Gate桥接地址", "admin:config:set:GATE_BRIDGE_URL")
+    .row()
+    .text("Gate桥接令牌", "admin:config:set:GATE_BRIDGE_TOKEN")
     .row()
     .text("Weex桥接地址", "admin:config:set:WEEX_BRIDGE_URL")
     .row()
@@ -153,11 +169,11 @@ const start = async () => {
       const previewErrors = result.errors.slice(0, 3)
       const errorText = previewErrors.length ? `\n错误示例:\n${previewErrors.join("\n")}` : ""
       return ctx.reply(
-        `Weex 同步完成\n拉取: ${result.pulled}\n入库: ${result.inserted}\n跳过: ${result.skipped}${errorText}`
+        `交易所同步完成\n拉取: ${result.pulled}\n入库: ${result.inserted}\n跳过: ${result.skipped}${errorText}`
       )
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
-      return ctx.reply(`Weex 同步失败：${message}`)
+      return ctx.reply(`交易所同步失败：${message}`)
     }
   }
 
@@ -183,6 +199,7 @@ const start = async () => {
     const result = await settleDueRebates()
     return ctx.reply(`已结算 ${result.settledCount} 笔，合计 ${result.totalAmount.toFixed(2)}`)
   })
+  bot.hears("🔄 同步交易所", handleWeexSync)
   bot.hears("🔄 同步 Weex", handleWeexSync)
   bot.hears("🧭 管理面板", (ctx) => ctx.reply("快捷面板", { reply_markup: panelKeyboard }))
 

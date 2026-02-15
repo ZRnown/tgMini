@@ -8,8 +8,15 @@
 
 可在管理机器人里设置：
 
-- `WEEX_BRIDGE_URL`：桥接接口 URL
-- `WEEX_BRIDGE_TOKEN`：Bearer Token
+- `BINANCE_BRIDGE_URL` / `BINANCE_BRIDGE_TOKEN`
+- `OKX_BRIDGE_URL` / `OKX_BRIDGE_TOKEN`
+- `BITGET_BRIDGE_URL` / `BITGET_BRIDGE_TOKEN`
+- `GATE_BRIDGE_URL` / `GATE_BRIDGE_TOKEN`
+- `WEEX_BRIDGE_URL` / `WEEX_BRIDGE_TOKEN`
+
+说明：
+- 推荐为每个交易所配置独立桥接地址与令牌。
+- 若未配置任何交易所专属键，会回退到旧的 `WEEX_BRIDGE_URL` / `WEEX_BRIDGE_TOKEN`。
 
 ## 请求方式
 

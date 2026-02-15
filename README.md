@@ -16,8 +16,13 @@ cp .env.example .env.local
 填写数据库、BOT_TOKEN、ADMIN_TG_IDS、API_SIGNING_SECRET。开发环境可选配置 `DEV_TG_ID` 以绕过 Telegram initData 校验。
 
 若需接入 Weex 返佣桥接同步，可额外配置：
-- `WEEX_BRIDGE_URL`：外部机器人提供的同步接口地址
-- `WEEX_BRIDGE_TOKEN`：外部机器人同步令牌（Bearer）
+- `BINANCE_BRIDGE_URL` / `BINANCE_BRIDGE_TOKEN`
+- `OKX_BRIDGE_URL` / `OKX_BRIDGE_TOKEN`
+- `BITGET_BRIDGE_URL` / `BITGET_BRIDGE_TOKEN`
+- `GATE_BRIDGE_URL` / `GATE_BRIDGE_TOKEN`
+- `WEEX_BRIDGE_URL` / `WEEX_BRIDGE_TOKEN`
+
+若未配置交易所专属键，系统会回退使用 `WEEX_BRIDGE_URL` / `WEEX_BRIDGE_TOKEN`。
 
 3) 初始化数据库
 ```
