@@ -39,7 +39,7 @@ const start = async () => {
   })
 
   const replyKeyboard = new Keyboard()
-    .text("📊 Dashboard")
+    .text("📊 数据看板")
     .text("📌 待审核绑定")
     .row()
     .text("💸 待处理提现")
@@ -47,13 +47,10 @@ const start = async () => {
     .row()
     .text("👑 VIP 配置")
     .text("🧾 结算返佣")
-    .row()
-    .text("🔄 同步交易所")
-    .text("🧭 管理面板")
     .resized()
 
   const panelKeyboard = new InlineKeyboard()
-    .text("Dashboard", "admin:dashboard")
+    .text("数据看板", "admin:dashboard")
     .text("待审核绑定", "admin:bindings")
     .row()
     .text("待处理提现", "admin:withdrawals")
@@ -61,8 +58,6 @@ const start = async () => {
     .row()
     .text("VIP 配置", "admin:vip:menu")
     .text("结算返佣", "admin:settle")
-    .row()
-    .text("同步交易所", "admin:weex:sync")
 
   const configKeyboard = new InlineKeyboard()
     .text("公群·公告频道", "admin:config:set:PUBLIC_GROUP_ANNOUNCE_URL")
@@ -177,7 +172,7 @@ const start = async () => {
     }
   }
 
-  bot.hears("📊 Dashboard", handleDashboard)
+  bot.hears("📊 数据看板", handleDashboard)
   bot.hears("📌 待审核绑定", handleBindings)
   bot.hears("💸 待处理提现", handleWithdrawals)
   bot.hears("⚙️ 配置管理", (ctx) => ctx.reply("请选择要配置的项目：", { reply_markup: configKeyboard }))
@@ -199,9 +194,6 @@ const start = async () => {
     const result = await settleDueRebates()
     return ctx.reply(`已结算 ${result.settledCount} 笔，合计 ${result.totalAmount.toFixed(2)}`)
   })
-  bot.hears("🔄 同步交易所", handleWeexSync)
-  bot.hears("🔄 同步 Weex", handleWeexSync)
-  bot.hears("🧭 管理面板", (ctx) => ctx.reply("快捷面板", { reply_markup: panelKeyboard }))
 
   bot.callbackQuery("admin:dashboard", async (ctx) => {
     await ctx.answerCallbackQuery()
