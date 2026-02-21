@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { Check, Link2, Loader2, Plus, ExternalLink, Info, X } from "lucide-react"
 import Image from "next/image"
 import { ExchangeLogo } from "@/components/exchange-logos"
+import { withTmaHeaders } from "@/lib/tma"
 
 type ConnectionStatus = "unbound" | "pending" | "bound"
 
@@ -30,6 +31,7 @@ export default function ExchangePage() {
   const [bindTarget, setBindTarget] = useState<Exchange | null>(null)
   const [bindUid, setBindUid] = useState("")
   const [bindError, setBindError] = useState("")
+  const [submitting, setSubmitting] = useState(false)
 
   const openBindModal = (exchange: Exchange) => {
     setBindTarget(exchange)
@@ -37,19 +39,38 @@ export default function ExchangePage() {
     setBindError("")
   }
 
-  const handleBindConfirm = () => {
+  const handleBindConfirm = async () => {
     if (!bindTarget) return
     const uid = bindUid.trim()
     if (!uid) {
       setBindError("请输入 UID")
       return
     }
-    setExchangeList((prev) =>
-      prev.map((ex) =>
-        ex.id === bindTarget.id ? { ...ex, status: "pending" as ConnectionStatus, uid } : ex
+    try {
+      setSubmitting(true)
+      setBindError("")
+      const response = await fetch("/api/bindings", {
+        method: "POST",
+        headers: withTmaHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ exchange: bindTarget.name, uid }),
+      })
+      const payload = (await response.json()) as { ok?: boolean; error?: string; binding?: { status?: ConnectionStatus } }
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error || "绑定失败")
+      }
+
+      const status = payload.binding?.status === "VERIFIED" ? "bound" : "pending"
+      setExchangeList((prev) =>
+        prev.map((ex) =>
+          ex.id === bindTarget.id ? { ...ex, status: status as ConnectionStatus, uid } : ex
+        )
       )
-    )
-    setBindTarget(null)
+      setBindTarget(null)
+    } catch (error) {
+      setBindError(error instanceof Error ? error.message : "绑定失败")
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const boundCount = exchangeList.filter((ex) => ex.status === "bound").length
@@ -97,9 +118,10 @@ export default function ExchangePage() {
               </button>
               <button
                 onClick={handleBindConfirm}
+                disabled={submitting}
                 className="flex-1 rounded-lg bg-primary py-2 text-xs font-medium text-primary-foreground"
               >
-                提交绑定
+                {submitting ? "提交中..." : "提交绑定"}
               </button>
             </div>
           </div>

@@ -1,7 +1,30 @@
 import { prisma } from "../prisma"
 import { getBooleanConfig, configDefaults } from "./config"
+import { verifyUidHasTrade } from "./binding-eligibility"
 
-export const requestBinding = async (userId: bigint, exchangeId: string, uid: string) => {
+const normalizeExchangeName = (value: string) => {
+  const key = value.trim().toLowerCase()
+  if (key === "gate" || key === "gate.io") return "Gate.io"
+  if (key === "okx") return "OKX"
+  if (key === "binance") return "Binance"
+  if (key === "bitget") return "Bitget"
+  if (key === "weex") return "Weex"
+  throw new Error(`Unsupported exchange: ${value}`)
+}
+
+export const requestBinding = async (userId: bigint, exchangeName: string, uid: string) => {
+  const normalizedName = normalizeExchangeName(exchangeName)
+  const hasTrade = await verifyUidHasTrade(normalizedName, uid)
+  if (!hasTrade) {
+    throw new Error("该 UID 暂无有效交易记录，请先完成至少一笔交易后再绑定。")
+  }
+
+  const exchange = await prisma.exchange.upsert({
+    where: { name: normalizedName },
+    create: { name: normalizedName },
+    update: {},
+  })
+
   const autoApprove = await getBooleanConfig("AUTO_BIND_APPROVE", configDefaults.autoBindApprove)
   const status = autoApprove ? "VERIFIED" : "PENDING"
 
@@ -9,12 +32,12 @@ export const requestBinding = async (userId: bigint, exchangeId: string, uid: st
     where: {
       userId_exchangeId: {
         userId,
-        exchangeId,
+        exchangeId: exchange.id,
       },
     },
     create: {
       userId,
-      exchangeId,
+      exchangeId: exchange.id,
       uid,
       status,
       reviewedAt: autoApprove ? new Date() : null,

@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { useState, useRef } from "react"
+import { useEffect, useState, useRef } from "react"
 import { FloatingDock } from "@/components/floating-dock"
 import { cn } from "@/lib/utils"
 import { 
@@ -18,12 +18,14 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import { usePublicConfig } from "@/hooks/use-public-config"
+import { withTmaHeaders } from "@/lib/tma"
 
-const withdrawalHistory = [
-  { id: 1, amount: 150.00, status: "completed", date: "2024-01-15", method: "USDT" },
-  { id: 2, amount: 200.00, status: "completed", date: "2024-01-10", method: "USDT" },
-  { id: 3, amount: 75.50, status: "pending", date: "2024-01-08", method: "USDT" },
-]
+type WithdrawalItem = {
+  id: string
+  amount: number
+  status: string
+  requestedAt: string
+}
 
 export default function ProfilePage() {
   const { config } = usePublicConfig()
@@ -33,6 +35,11 @@ export default function ProfilePage() {
   const [slideProgress, setSlideProgress] = useState(0)
   const [isConfirmed, setIsConfirmed] = useState(false)
   const sliderRef = useRef<HTMLDivElement>(null)
+  const [withdrawalHistory, setWithdrawalHistory] = useState<WithdrawalItem[]>([])
+  const [historyPage, setHistoryPage] = useState(1)
+  const [historyPages, setHistoryPages] = useState(1)
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyError, setHistoryError] = useState("")
 
   const availableBalance = 342.15
   const totalWithdrawn = 1250.00
@@ -69,6 +76,42 @@ export default function ProfilePage() {
   }
 
   const quickAmounts = [50, 100, 200, "全部"]
+
+  useEffect(() => {
+    let active = true
+    const loadHistory = async () => {
+      try {
+        setHistoryLoading(true)
+        setHistoryError("")
+        const response = await fetch(`/api/withdrawals?page=${historyPage}&pageSize=5`, {
+          headers: withTmaHeaders(),
+          cache: "no-store",
+        })
+        const payload = (await response.json()) as {
+          ok?: boolean
+          error?: string
+          totalPages?: number
+          items?: WithdrawalItem[]
+        }
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload.error || "提现记录加载失败")
+        }
+        if (!active) return
+        setWithdrawalHistory(Array.isArray(payload.items) ? payload.items : [])
+        setHistoryPages(Math.max(payload.totalPages ?? 1, 1))
+      } catch (error) {
+        if (!active) return
+        setHistoryError(error instanceof Error ? error.message : "提现记录加载失败")
+      } finally {
+        if (active) setHistoryLoading(false)
+      }
+    }
+
+    loadHistory()
+    return () => {
+      active = false
+    }
+  }, [historyPage])
 
   return (
     <main className="min-h-screen pb-20 bg-background">
@@ -218,18 +261,48 @@ export default function ProfilePage() {
               <div key={item.id} className="flex items-center justify-between">
                 <div>
                   <p className="font-mono font-medium text-foreground">-${item.amount.toFixed(2)}</p>
-                  <p className="text-xs text-muted-foreground">{item.date} · {item.method}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(item.requestedAt).toISOString().slice(0, 10)} · USDT
+                  </p>
                 </div>
                 <span className={cn(
                   "px-2 py-1 rounded text-[10px] font-medium",
-                  item.status === "completed" 
+                  item.status === "PAID" 
                     ? "bg-gain/20 text-gain" 
                     : "bg-warning/20 text-warning"
                 )}>
-                  {item.status === "completed" ? "已完成" : "处理中"}
+                  {item.status === "PAID" ? "已完成" : "处理中"}
                 </span>
               </div>
             ))}
+            {historyLoading && (
+              <p className="text-xs text-muted-foreground">加载中...</p>
+            )}
+            {!historyLoading && withdrawalHistory.length === 0 && (
+              <p className="text-xs text-muted-foreground">暂无提现记录</p>
+            )}
+            {historyError && (
+              <p className="text-xs text-loss">{historyError}</p>
+            )}
+          </div>
+          <div className="mt-4 flex items-center justify-between">
+            <button
+              disabled={historyPage <= 1}
+              onClick={() => setHistoryPage((prev) => Math.max(prev - 1, 1))}
+              className="rounded-md border border-border px-3 py-1 text-xs text-foreground disabled:opacity-40"
+            >
+              上一页
+            </button>
+            <span className="text-xs text-muted-foreground">
+              第 {historyPage} / {historyPages} 页
+            </span>
+            <button
+              disabled={historyPage >= historyPages}
+              onClick={() => setHistoryPage((prev) => Math.min(prev + 1, historyPages))}
+              className="rounded-md border border-border px-3 py-1 text-xs text-foreground disabled:opacity-40"
+            >
+              下一页
+            </button>
           </div>
         </div>
 
