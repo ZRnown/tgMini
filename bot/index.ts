@@ -98,6 +98,83 @@ const start = async () => {
   const pendingWithdrawPaid = new Map<number, string>()
   const pendingVipInput = new Map<number, boolean>()
   const cancelInlineKeyboard = new InlineKeyboard().text("取消操作", "admin:cancel")
+  const configFieldHint: Record<string, { title: string; tip: string; example: string }> = {
+    PUBLIC_GROUP_ANNOUNCE_URL: {
+      title: "公群公告频道链接",
+      tip: "填写可访问的完整链接（https 开头）。",
+      example: "https://t.me/your_channel",
+    },
+    PUBLIC_GROUP_GUIDE_URL: {
+      title: "公群新手指南链接",
+      tip: "填写可访问的完整链接（https 开头）。",
+      example: "https://t.me/your_group/123",
+    },
+    PUBLIC_GROUP_FEEDBACK_URL: {
+      title: "公群反馈建议链接",
+      tip: "填写可访问的完整链接（https 开头）。",
+      example: "https://t.me/your_group/456",
+    },
+    COMMUNITY_BOT_URL: {
+      title: "聚合群机器人链接",
+      tip: "填写机器人链接（推荐 t.me 或 https 完整链接）。",
+      example: "https://t.me/your_community_bot",
+    },
+    SUPPORT_BOT_URL: {
+      title: "客服机器人链接",
+      tip: "填写机器人链接（推荐 t.me 或 https 完整链接）。",
+      example: "https://t.me/your_support_bot",
+    },
+    BINANCE_BRIDGE_URL: {
+      title: "Binance 同步接口地址",
+      tip: "填写你的桥接服务 API 地址（https 开头）。",
+      example: "https://bridge.example.com/binance/trades",
+    },
+    BINANCE_BRIDGE_TOKEN: {
+      title: "Binance 同步接口令牌",
+      tip: "填写接口鉴权 token（由你的桥接服务提供）。",
+      example: "sk_live_xxxxx",
+    },
+    OKX_BRIDGE_URL: {
+      title: "OKX 同步接口地址",
+      tip: "填写你的桥接服务 API 地址（https 开头）。",
+      example: "https://bridge.example.com/okx/trades",
+    },
+    OKX_BRIDGE_TOKEN: {
+      title: "OKX 同步接口令牌",
+      tip: "填写接口鉴权 token（由你的桥接服务提供）。",
+      example: "sk_live_xxxxx",
+    },
+    BITGET_BRIDGE_URL: {
+      title: "Bitget 同步接口地址",
+      tip: "填写你的桥接服务 API 地址（https 开头）。",
+      example: "https://bridge.example.com/bitget/trades",
+    },
+    BITGET_BRIDGE_TOKEN: {
+      title: "Bitget 同步接口令牌",
+      tip: "填写接口鉴权 token（由你的桥接服务提供）。",
+      example: "sk_live_xxxxx",
+    },
+    GATE_BRIDGE_URL: {
+      title: "Gate 同步接口地址",
+      tip: "填写你的桥接服务 API 地址（https 开头）。",
+      example: "https://bridge.example.com/gate/trades",
+    },
+    GATE_BRIDGE_TOKEN: {
+      title: "Gate 同步接口令牌",
+      tip: "填写接口鉴权 token（由你的桥接服务提供）。",
+      example: "sk_live_xxxxx",
+    },
+    WEEX_BRIDGE_URL: {
+      title: "Weex 同步接口地址",
+      tip: "填写你的桥接服务 API 地址（https 开头）。",
+      example: "https://bridge.example.com/weex/trades",
+    },
+    WEEX_BRIDGE_TOKEN: {
+      title: "Weex 同步接口令牌",
+      tip: "填写接口鉴权 token（由你的桥接服务提供）。",
+      example: "sk_live_xxxxx",
+    },
+  }
 
   const handleDashboard = async (ctx: any) => {
     const data = await getDashboard()
@@ -224,8 +301,11 @@ const start = async () => {
     if (!key) return ctx.answerCallbackQuery()
     pendingConfig.set(Number(ctx.from?.id), key)
     await ctx.answerCallbackQuery()
+    const hint = configFieldHint[key]
     return ctx.reply(
-      `请发送新的配置值：${key}\n支持链接或文本，可点击“取消操作”退出。`,
+      hint
+        ? `你正在设置：${hint.title}\n字段键名：${key}\n要求：${hint.tip}\n示例：${hint.example}\n\n请直接发送新值。`
+        : `你正在设置字段：${key}\n请直接发送新值。`,
       { reply_markup: cancelInlineKeyboard }
     )
   })

@@ -89,33 +89,33 @@ export default function HomePage() {
       {/* 签到奖励弹窗 */}
       {showRewardModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="card-base p-6 w-[320px] relative animate-in fade-in zoom-in duration-300">
+          <div className="card-base p-4 w-[280px] relative animate-in fade-in zoom-in duration-300">
             <button 
               onClick={() => setShowRewardModal(false)}
-              className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+              className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
             
             <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
-                <Sparkles className="w-8 h-8 text-primary" />
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-primary/20 flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-lg font-bold text-foreground mb-2">签到成功!</h3>
-              <p className="text-sm text-muted-foreground mb-6">恭喜你获得今日签到奖励</p>
+              <h3 className="text-base font-bold text-foreground mb-1.5">签到成功!</h3>
+              <p className="text-xs text-muted-foreground mb-4">恭喜你获得今日签到奖励</p>
               
-              <div className="space-y-3 mb-6">
-                <div className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-                  <span className="text-sm text-muted-foreground">积分奖励</span>
-                  <span className="text-lg font-bold font-mono text-primary">+{rewardData.coins}</span>
+              <div className="space-y-2.5 mb-4">
+                <div className="flex items-center justify-between p-2.5 bg-secondary rounded-lg">
+                  <span className="text-xs text-muted-foreground">积分奖励</span>
+                  <span className="text-base font-bold font-mono text-primary">+{rewardData.coins}</span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-                  <span className="text-sm text-muted-foreground">经验值</span>
-                  <span className="text-lg font-bold font-mono text-gain">+{rewardData.xp} XP</span>
+                <div className="flex items-center justify-between p-2.5 bg-secondary rounded-lg">
+                  <span className="text-xs text-muted-foreground">经验值</span>
+                  <span className="text-base font-bold font-mono text-gain">+{rewardData.xp} XP</span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-                  <span className="text-sm text-muted-foreground">连续签到</span>
-                  <span className="text-lg font-bold font-mono text-foreground">{rewardData.streak} 天</span>
+                <div className="flex items-center justify-between p-2.5 bg-secondary rounded-lg">
+                  <span className="text-xs text-muted-foreground">连续签到</span>
+                  <span className="text-base font-bold font-mono text-foreground">{rewardData.streak} 天</span>
                 </div>
               </div>
               
@@ -125,7 +125,7 @@ export default function HomePage() {
               
               <button 
                 onClick={() => setShowRewardModal(false)}
-                className="mt-4 w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-medium"
+                className="mt-3 w-full py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
               >
                 收下奖励
               </button>

@@ -128,18 +128,18 @@ export default function QueryPage() {
             <span className="text-sm font-medium text-foreground">交易量</span>
             <span className="text-xs text-muted-foreground">当前额外返佣 {bonusLabel}</span>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-lg bg-secondary/60 p-3">
+          <div className="grid grid-cols-3 gap-2.5">
+            <div className="rounded-lg bg-secondary/60 p-2.5">
               <p className="text-xs text-muted-foreground">昨日</p>
-              <p className="font-mono font-medium text-foreground mt-1">${tradeSummary.yesterday.toLocaleString()}</p>
+              <p className="font-mono text-[13px] font-medium text-foreground mt-1">${tradeSummary.yesterday.toLocaleString()}</p>
             </div>
-            <div className="rounded-lg bg-secondary/60 p-3">
+            <div className="rounded-lg bg-secondary/60 p-2.5">
               <p className="text-xs text-muted-foreground">本月</p>
-              <p className="font-mono font-medium text-foreground mt-1">${tradeSummary.month.toLocaleString()}</p>
+              <p className="font-mono text-[13px] font-medium text-foreground mt-1">${tradeSummary.month.toLocaleString()}</p>
             </div>
-            <div className="rounded-lg bg-secondary/60 p-3">
+            <div className="rounded-lg bg-secondary/60 p-2.5">
               <p className="text-xs text-muted-foreground">总计</p>
-              <p className="font-mono font-medium text-foreground mt-1">${tradeSummary.total.toLocaleString()}</p>
+              <p className="font-mono text-[13px] font-medium text-foreground mt-1">${tradeSummary.total.toLocaleString()}</p>
             </div>
           </div>
         </div>
